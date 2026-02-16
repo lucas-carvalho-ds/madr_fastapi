@@ -8,7 +8,9 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
 dependencies = [
-    "fastapi[standard] (>=0.129.0,<0.130.0)"
+    "fastapi[standard] (>=0.129.0,<0.130.0)",
+    "sqlalchemy (>=2.0.46,<3.0.0)",
+    "alembic (>=1.18.4,<2.0.0)"
 ]
 
 
@@ -44,7 +46,7 @@ addopts = '-p no:warnings'
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
-run = 'fastapi dev [nome_da_pasta_do_projeto]/[nome_do_app_principal].py'
+run = 'fastapi dev madr_fastapi/app.py'
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=[nome_da_pasta_do_projeto] -vv'
+test = 'pytest -s -x --cov=madr_fastapi -vv'
 post_test = 'coverage html'
