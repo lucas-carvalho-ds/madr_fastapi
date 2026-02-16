@@ -1,18 +1,94 @@
-from contextlib import contextmanager
-from datetime import datetime
-from sqlalchemy import event
+import factory
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
-@contextmanager
-def _mock_db_time(*, model, time=datetime(2026, 1, 30)):
-    def fake_time_hook(mapper, connection, target):
-        if hasattr(target, 'created_at'):
-            target.created_at = time
+from madr_fastapi.app import app
+from madr_fastapi.database import get_session
+from madr_fastapi.models import Account, table_registry
+from madr_fastapi.security import get_password_hash
+from madr_fastapi.settings import Settings
 
-        if hasattr(target, 'updated_at'):
-            target.updated_at = time
 
-    event.listen(model, 'before_insert', fake_time_hook)
+@pytest.fixture
+def client(session):
+    def get_session_overrides():
+        return session
 
-    yield time
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_overrides
+        yield client
 
-    event.remove(model, 'before_insert', fake_time_hook)
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def session():
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
+    table_registry.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        yield session
+
+    table_registry.metadata.drop_all(engine)
+    engine.dispose()
+
+
+@pytest.fixture
+def account(session: Session) -> Account:
+    password = 'test123'
+
+    account = AccountFactory(password=get_password_hash(password))
+
+    session.add(account)
+    session.commit()
+    session.refresh(account)
+
+    account.clean_password = password  # type: ignore
+
+    return account  # type: ignore
+
+
+@pytest.fixture
+def other_account(session: Session) -> Account:
+    password = 'test123'
+
+    user = AccountFactory(password=get_password_hash(password))
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    user.clean_password = password  # type: ignore
+
+    return user  # type: ignore
+
+
+@pytest.fixture
+def token(client, account):
+    response = client.post(
+        '/auth/token',
+        data={'username': account.email, 'password': account.clean_password},
+    )
+
+    return response.json()['access_token']
+
+
+@pytest.fixture
+def settings():
+    return Settings()  # type: ignore
+
+
+class AccountFactory(factory.Factory):
+    class Meta:
+        model = Account
+
+    username = factory.Sequence(lambda n: f'test{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
+    password = factory.LazyAttribute(lambda obj: f'{obj.username}@123')

@@ -1,66 +1,119 @@
-from datetime import datetime
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from madr_fastapi.database import get_session
+from madr_fastapi.models import Account
 from madr_fastapi.schemas import (
-    AccountDB,
     AccountList,
     AccountPublic,
     AccountSchema,
     Message,
 )
+from madr_fastapi.security import get_current_account, get_password_hash
+from madr_fastapi.services import (
+    ensure_account_owner,
+    verify_duplicate_account,
+)
+from madr_fastapi.utils import sanitize_username
 
 router = APIRouter(prefix='/contas', tags=['contas'])
 
-database = []
+SessionDep = Annotated[Session, Depends(get_session)]
+CurrentAccount = Annotated[Account, Depends(get_current_account)]
 
 
 @router.post(
     '/conta', response_model=AccountPublic, status_code=HTTPStatus.CREATED
 )
-def criar_conta(account: AccountSchema):
-    account_db = AccountDB(
-        id=len(database) + 1,
-        username=account.username,
+def create_account(session: SessionDep, account: AccountSchema):
+    verify_duplicate_account(session, account)
+
+    cleaned_username = sanitize_username(account.username)
+
+    db_account = Account(
+        username=cleaned_username,
         email=account.email,
-        password=account.password,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
+        password=get_password_hash(account.password),
     )
 
-    database.append(account_db)
+    session.add(db_account)
+    session.commit()
+    session.refresh(db_account)
 
-    return account_db
+    return db_account
 
 
 @router.get('/', response_model=AccountList, status_code=HTTPStatus.OK)
-def listar_contas():
-    return {'accounts': database}
+def list_accounts(session: SessionDep):
+    accounts = session.scalars(select(Account))
+
+    return {'accounts': accounts}
 
 
 @router.put(
-    '/conta/{id}', response_model=AccountPublic, status_code=HTTPStatus.OK
+    '/conta/{account_id}',
+    response_model=AccountPublic,
+    status_code=HTTPStatus.OK,
 )
-def alterar_conta(account_id: int, account: AccountSchema):
-    account_db = AccountDB(
-        id=account_id,
-        username=account.username,
-        email=account.email,
-        password=account.password,
-        created_at=database[account_id].created_at,
-        updated_at=datetime.now(),
-    )
+def update_account(
+    session: SessionDep,
+    current_account: CurrentAccount,
+    account_id: int,
+    account: AccountSchema,
+):
+    ensure_account_owner(current_account, account_id)
 
-    database[account_id - 1] = account_db
+    try:
+        cleaned_username = sanitize_username(account.username)
 
-    return account_db
+        current_account.username = cleaned_username
+        current_account.email = account.email
+        current_account.password = get_password_hash(account.password)
+
+        session.add(current_account)
+        session.commit()
+        session.refresh(current_account)
+
+        return current_account
+
+    except IntegrityError:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Username or Email already exists.',
+        )
 
 
 @router.delete(
-    '/conta/{id}', response_model=Message, status_code=HTTPStatus.OK
+    '/conta/{account_id}', response_model=Message, status_code=HTTPStatus.OK
 )
-def deletar_conta(account_id: int):
-    database.pop(account_id - 1)
+def delete_account(
+    session: SessionDep, current_account: CurrentAccount, account_id: int
+):
+    ensure_account_owner(current_account, account_id)
 
-    return {'message': 'Account deleted.'}
+    session.delete(current_account)
+    session.commit()
+
+    return {'message': 'Account deleted successfully.'}
+
+
+@router.get(
+    '/conta/{account_id}',
+    response_model=AccountPublic,
+    status_code=HTTPStatus.OK,
+)
+def list_account(
+    session: SessionDep, current_account: CurrentAccount, account_id: int
+):
+    ensure_account_owner(current_account, account_id)
+
+    db_account = session.scalar(
+        select(Account).where(Account.id == account_id)
+    )
+
+    return db_account

@@ -2,11 +2,12 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-from madr_fastapi.routers import contas
+from madr_fastapi.routers import auth, contas
 
 app = FastAPI(title='Projeto MADR')
 
 app.include_router(contas.router)
+app.include_router(auth.router)
 
 
 @app.get('/', status_code=HTTPStatus.OK)
