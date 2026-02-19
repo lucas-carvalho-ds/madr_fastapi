@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class Message(BaseModel):
@@ -26,3 +26,31 @@ class UserPublic(BaseModel):
 
 class UserList(BaseModel):
     users: list[UserPublic]
+
+
+class NovelistSchema(BaseModel):
+    name: str
+
+
+class NovelistPublic(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NovelistUpdate(BaseModel):
+    name: str | None = None
+
+
+class NovelistList(BaseModel):
+    novelists: list[NovelistPublic]
+
+
+class FilterPage(BaseModel):
+    limit: int = Field(ge=0, default=20)
+
+
+class FilterNovelist(FilterPage):
+    page: int = 1
+    name: str | None = Field(default=None, min_length=1, max_length=80)

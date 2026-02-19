@@ -1,7 +1,7 @@
 import unicodedata
 
 
-def sanitize_username(name: str) -> str:  # pragma: no cover
+def sanitize_name(name: str) -> str:  # pragma: no cover
     if not isinstance(name, str):
         return name
 

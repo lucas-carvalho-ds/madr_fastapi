@@ -19,7 +19,7 @@ from madr_fastapi.services import (
     ensure_user_owner,
     verify_duplicate_user,
 )
-from madr_fastapi.utils import sanitize_username
+from madr_fastapi.utils import sanitize_name
 
 router = APIRouter(prefix='/users', tags=['users'])
 
@@ -33,7 +33,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 def create_user(session: SessionDep, user: UserSchema):
     verify_duplicate_user(session, user)
 
-    cleaned_username = sanitize_username(user.username)
+    cleaned_username = sanitize_name(user.username)
 
     db_user = User(
         username=cleaned_username,
@@ -69,7 +69,7 @@ def update_user(
     ensure_user_owner(current_user, user_id)
 
     try:
-        cleaned_username = sanitize_username(user.username)
+        cleaned_username = sanitize_name(user.username)
 
         current_user.username = cleaned_username
         current_user.email = user.email

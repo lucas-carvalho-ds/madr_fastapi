@@ -15,33 +15,29 @@ class User:
 
 
 @table_registry.mapped_as_dataclass
-class Romancista:
-    __tablename__ = 'romancistas'
+class Novelist:
+    __tablename__ = 'novelists'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
-    livros: Mapped[list['Livro']] = relationship(
+    books: Mapped[list['Book']] = relationship(
         init=False,
-        back_populates='romancista',
-        cascade='all, delete-orphan', 
-        lazy='selectin'
+        back_populates='novelist',
+        cascade='all, delete-orphan',
+        lazy='selectin',
     )
 
 
 @table_registry.mapped_as_dataclass
-class Livro:
-    __tablename__ = 'livros'
+class Book:
+    __tablename__ = 'books'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    title: Mapped[str]
+    title: Mapped[str] = mapped_column(unique=True)
     year: Mapped[int]
-    novelist_id: Mapped[int] = mapped_column(ForeignKey('romancistas.id'))
+    novelist_id: Mapped[int] = mapped_column(ForeignKey('novelists.id'))
 
-    romancista: Mapped[Romancista] = relationship(
-        init=False, back_populates='livros'
+    novelist: Mapped[Novelist] = relationship(
+        init=False, back_populates='books'
     )
-
-
-
-
