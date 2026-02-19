@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from madr_fastapi.database import get_session
-from madr_fastapi.models import Account
+from madr_fastapi.models import User
 from madr_fastapi.settings import Settings
 
 settings = Settings()  # type: ignore
@@ -46,7 +46,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_current_account(
+def get_current_user(
     session: Session = Depends(get_session),
     token: str = Depends(oauth2_scheme),
 ):
@@ -71,11 +71,9 @@ def get_current_account(
     except ExpiredSignatureError:
         raise credentials_exception
 
-    account = session.scalar(
-        select(Account).where(Account.email == subject_email)
-    )
+    user = session.scalar(select(User).where(User.email == subject_email))
 
-    if not account:
+    if not user:
         raise credentials_exception
 
-    return account
+    return user

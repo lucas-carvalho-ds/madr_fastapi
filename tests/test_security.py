@@ -20,19 +20,19 @@ def test_jwt(settings):
 
 def test_jwt_invalid_token(client):
     response = client.delete(
-        '/contas/conta/1', headers={'Authorization': 'Bearer token-invalido'}
+        '/users/user/1', headers={'Authorization': 'Bearer token-invalido'}
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {'detail': 'Could not validate credentials.'}
 
 
-def test_get_current_account_not_found(client):
+def test_get_current_user_not_found(client):
     data = {'no-email': 'test'}
     token = create_access_token(data)
 
     response = client.delete(
-        '/contas/conta/1',
+        '/users/user/1',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -45,7 +45,7 @@ def test_get_current_user_does_not_exists(client):
     token = create_access_token(data)
 
     response = client.delete(
-        '/contas/conta/1',
+        '/users/user/1',
         headers={'Authorization': f'Bearer {token}'},
     )
 

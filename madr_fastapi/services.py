@@ -4,52 +4,49 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from madr_fastapi.models import Account
+from madr_fastapi.models import User
 from madr_fastapi.security import verify_password
 from madr_fastapi.utils import sanitize_username
 
 
-def verify_duplicate_account(session: Session, account) -> None:
-    cleaned_username = sanitize_username(account.username)
+def verify_duplicate_user(session: Session, user) -> None:
+    cleaned_username = sanitize_username(user.username)
 
-    db_account = session.scalar(
-        select(Account).where(
-            (Account.username == cleaned_username)
-            | (Account.email == account.email)
+    db_user = session.scalar(
+        select(User).where(
+            (User.username == cleaned_username) | (User.email == user.email)
         )
     )
 
-    if db_account:
-        if db_account.username == cleaned_username:
+    if db_user:
+        if db_user.username == cleaned_username:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='Username already exists.',
             )
-        elif db_account.email == account.email:
+        elif db_user.email == user.email:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='Email already exists.',
             )
 
 
-def ensure_account_owner(current_account: Account, account_id: int) -> None:
-    if current_account.id != account_id:
+def ensure_user_owner(current_user: User, user_id: int) -> None:
+    if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail='Unauthorized.',
         )
 
 
-def authenticate_account(
-    session: Session, email: str, password: str
-) -> Account:
+def authenticate_user(session: Session, email: str, password: str) -> User:
 
-    account = session.scalar(select(Account).where(Account.email == email))
+    user = session.scalar(select(User).where(User.email == email))
 
-    if not account or not verify_password(password, account.password):
+    if not user or not verify_password(password, user.password):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail='Incorrect email or password.',
         )
 
-    return account
+    return user

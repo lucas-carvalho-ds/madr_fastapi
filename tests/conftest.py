@@ -7,7 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from madr_fastapi.app import app
 from madr_fastapi.database import get_session
-from madr_fastapi.models import Account, table_registry
+from madr_fastapi.models import User, table_registry
 from madr_fastapi.security import get_password_hash
 from madr_fastapi.settings import Settings
 
@@ -41,25 +41,10 @@ def session():
 
 
 @pytest.fixture
-def account(session: Session) -> Account:
+def user(session: Session) -> User:
     password = 'test123'
 
-    account = AccountFactory(password=get_password_hash(password))
-
-    session.add(account)
-    session.commit()
-    session.refresh(account)
-
-    account.clean_password = password  # type: ignore
-
-    return account  # type: ignore
-
-
-@pytest.fixture
-def other_account(session: Session) -> Account:
-    password = 'test123'
-
-    user = AccountFactory(password=get_password_hash(password))
+    user = UserFactory(password=get_password_hash(password))
 
     session.add(user)
     session.commit()
@@ -71,10 +56,25 @@ def other_account(session: Session) -> Account:
 
 
 @pytest.fixture
-def token(client, account):
+def other_user(session: Session) -> User:
+    password = 'test123'
+
+    user = UserFactory(password=get_password_hash(password))
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    user.clean_password = password  # type: ignore
+
+    return user  # type: ignore
+
+
+@pytest.fixture
+def token(client, user):
     response = client.post(
         '/auth/token',
-        data={'username': account.email, 'password': account.clean_password},
+        data={'username': user.email, 'password': user.clean_password},
     )
 
     return response.json()['access_token']
@@ -85,9 +85,9 @@ def settings():
     return Settings()  # type: ignore
 
 
-class AccountFactory(factory.Factory):
+class UserFactory(factory.Factory):
     class Meta:
-        model = Account
+        model = User
 
     username = factory.Sequence(lambda n: f'test{n}')
     email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')

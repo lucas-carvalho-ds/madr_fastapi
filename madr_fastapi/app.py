@@ -2,11 +2,11 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-from madr_fastapi.routers import auth, contas
+from madr_fastapi.routers import auth, users
 
 app = FastAPI(title='Projeto MADR')
 
-app.include_router(contas.router)
+app.include_router(users.router)
 app.include_router(auth.router)
 
 

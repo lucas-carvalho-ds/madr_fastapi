@@ -10,13 +10,13 @@ class LoginToken(BaseModel):
     access_token: str
 
 
-class AccountSchema(BaseModel):
+class UserSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
 
 
-class AccountPublic(BaseModel):
+class UserPublic(BaseModel):
     id: int
     email: EmailStr
     username: str
@@ -24,5 +24,5 @@ class AccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class AccountList(BaseModel):
-    accounts: list[AccountPublic]
+class UserList(BaseModel):
+    users: list[UserPublic]

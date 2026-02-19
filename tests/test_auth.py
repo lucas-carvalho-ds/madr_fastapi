@@ -3,10 +3,10 @@ from http import HTTPStatus
 from freezegun import freeze_time
 
 
-def test_get_token(client, account):
+def test_get_token(client, user):
     response = client.post(
         '/auth/token',
-        data={'username': account.email, 'password': account.clean_password},
+        data={'username': user.email, 'password': user.clean_password},
     )
 
     token = response.json()
@@ -28,23 +28,23 @@ def test_login_inexistent_user(client):
     assert response.json() == {'detail': 'Incorrect email or password.'}
 
 
-def test_login_wrong_password(client, account):
+def test_login_wrong_password(client, user):
     response = client.post(
         '/auth/token',
-        data={'username': account.email, 'password': 'wrong_password'},
+        data={'username': user.email, 'password': 'wrong_password'},
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json() == {'detail': 'Incorrect email or password.'}
 
 
-def test_token_expired_aftertime(client, account):
+def test_token_expired_aftertime(client, user):
     with freeze_time('2023-07-14 12:00:00'):
         response = client.post(
             '/auth/token',
             data={
-                'username': account.email,
-                'password': account.clean_password,
+                'username': user.email,
+                'password': user.clean_password,
             },
         )
 
@@ -53,7 +53,7 @@ def test_token_expired_aftertime(client, account):
 
     with freeze_time('2023-07-14 13:01:00'):
         response = client.put(
-            f'/contas/conta/{account.id}',
+            f'/users/user/{user.id}',
             headers={'Authorization': f'Bearer {token}'},
             json={
                 'username': 'wrongwrong',
@@ -81,13 +81,13 @@ def test_get_refresh_token(client, token):
     assert 'access_token' in new_token
 
 
-def test_token_expired_dont_refresh(client, account):
+def test_token_expired_dont_refresh(client, user):
     with freeze_time('2023-07-14 12:00:00'):
         response = client.post(
             '/auth/token',
             data={
-                'username': account.email,
-                'password': account.clean_password,
+                'username': user.email,
+                'password': user.clean_password,
             },
         )
 

@@ -1,11 +1,11 @@
 from http import HTTPStatus
 
-from madr_fastapi.schemas import AccountPublic
+from madr_fastapi.schemas import UserPublic
 
 
-def test_create_account(client):
+def test_create_user(client):
     response = client.post(
-        '/contas/conta',
+        '/users/user',
         json={
             'username': 'alice',
             'email': 'alice@example.com',
@@ -21,20 +21,20 @@ def test_create_account(client):
     }
 
 
-def test_read_accounts(client, account, token):
-    account_schema = AccountPublic.model_validate(account).model_dump()
+def test_read_users(client, user, token):
+    user_schema = UserPublic.model_validate(user).model_dump()
 
     response = client.get(
-        '/contas', headers={'Authorization': f'Bearer {token}'}
+        '/users', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'accounts': [account_schema]}
+    assert response.json() == {'users': [user_schema]}
 
 
-def test_update_account(client, account, token):
+def test_update_user(client, user, token):
     response = client.put(
-        f'/contas/conta/{account.id}',
+        f'/users/user/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'alice nery',
@@ -51,35 +51,35 @@ def test_update_account(client, account, token):
     }
 
 
-def test_read_account(client, account, token):
+def test_read_user(client, user, token):
     response = client.get(
-        f'/contas/conta/{account.id}',
+        f'/users/user/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'id': 1,
-        'username': f'{account.username}',
-        'email': f'{account.username}@test.com',
+        'username': f'{user.username}',
+        'email': f'{user.username}@test.com',
     }
 
 
-def test_delete_account(client, account, token):
+def test_delete_user(client, user, token):
     response = client.delete(
-        f'/contas/conta/{account.id}',
+        f'/users/user/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'message': 'Account deleted successfully.'}
+    assert response.json() == {'message': 'User deleted successfully.'}
 
 
-def test_username_already_exists_create_account(client, account):
+def test_username_already_exists_create_user(client, user):
     response = client.post(
-        '/contas/conta/',
+        '/users/user/',
         json={
-            'username': account.username,
+            'username': user.username,
             'email': 'alice@example.com',
             'password': 'secret',
         },
@@ -89,12 +89,12 @@ def test_username_already_exists_create_account(client, account):
     assert response.json() == {'detail': 'Username already exists.'}
 
 
-def test_email_already_exists_create_account(client, account):
+def test_email_already_exists_create_user(client, user):
     response = client.post(
-        '/contas/conta/',
+        '/users/user/',
         json={
             'username': 'alice',
-            'email': account.email,
+            'email': user.email,
             'password': 'secret',
         },
     )
@@ -103,12 +103,12 @@ def test_email_already_exists_create_account(client, account):
     assert response.json() == {'detail': 'Email already exists.'}
 
 
-def test_update_integrity_error(client, account, other_account, token):
+def test_update_integrity_error(client, user, other_user, token):
     response = client.put(
-        f'/contas/conta/{account.id}',
+        f'/users/user/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': other_account.username,
+            'username': other_user.username,
             'email': 'bob@example.com',
             'password': 'mynewpassword',
         },
@@ -118,9 +118,9 @@ def test_update_integrity_error(client, account, other_account, token):
     assert response.json() == {'detail': 'Username or Email already exists.'}
 
 
-def test_update_account_with_another_account(client, other_account, token):
+def test_update_user_with_another_user(client, other_user, token):
     response = client.put(
-        f'/contas/conta/{other_account.id}',
+        f'/users/user/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
@@ -133,9 +133,9 @@ def test_update_account_with_another_account(client, other_account, token):
     assert response.json() == {'detail': 'Unauthorized.'}
 
 
-def test_delete_account_with_another_account(client, other_account, token):
+def test_delete_user_with_another_user(client, other_user, token):
     response = client.delete(
-        f'/contas/conta/{other_account.id}',
+        f'/users/user/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
