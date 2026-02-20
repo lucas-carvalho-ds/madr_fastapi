@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from madr_fastapi.database import get_session
 from madr_fastapi.models import Novelist, User
@@ -24,25 +24,25 @@ from madr_fastapi.utils import sanitize_name
 
 router = APIRouter(prefix='/novelists', tags=['novelists'])
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
     '/novelist', response_model=NovelistPublic, status_code=HTTPStatus.CREATED
 )
-def create_novelist(
+async def create_novelist(
     session: SessionDep, current_user: CurrentUser, novelist: NovelistSchema
 ):
-    verify_duplicate_novelist(session, novelist)
+    await verify_duplicate_novelist(session, novelist)
 
     cleaned_name = sanitize_name(novelist.name)
 
     db_novelist = Novelist(name=cleaned_name)
 
     session.add(db_novelist)
-    session.commit()
-    session.refresh(db_novelist)
+    await session.commit()
+    await session.refresh(db_novelist)
 
     return db_novelist
 
@@ -52,13 +52,13 @@ def create_novelist(
     response_model=Message,
     status_code=HTTPStatus.OK,
 )
-def delete_novelist(
+async def delete_novelist(
     session: SessionDep, current_user: CurrentUser, novelist_id: int
 ):
-    db_novelist = get_novelist_or_return_404(session, novelist_id)
+    db_novelist = await get_novelist_or_return_404(session, novelist_id)
 
-    session.delete(db_novelist)
-    session.commit()
+    await session.delete(db_novelist)
+    await session.commit()
 
     return {'message': 'Novelist deleted in MADR.'}
 
@@ -68,14 +68,14 @@ def delete_novelist(
     response_model=NovelistPublic,
     status_code=HTTPStatus.OK,
 )
-def update_novelist(
+async def update_novelist(
     session: SessionDep,
     current_user: CurrentUser,
     novelist_id: int,
     novelist: NovelistUpdate,
 ):
-    db_novelist = get_novelist_or_return_404(session, novelist_id)
-    verify_duplicate_novelist(session, novelist)
+    db_novelist = await get_novelist_or_return_404(session, novelist_id)
+    await verify_duplicate_novelist(session, novelist)
 
     for key, value in novelist.model_dump(exclude_unset=True).items():
         new_value = value
@@ -84,8 +84,8 @@ def update_novelist(
         setattr(db_novelist, key, new_value)
 
     session.add(db_novelist)
-    session.commit()
-    session.refresh(db_novelist)
+    await session.commit()
+    await session.refresh(db_novelist)
 
     return db_novelist
 
@@ -95,16 +95,16 @@ def update_novelist(
     response_model=NovelistPublic,
     status_code=HTTPStatus.OK,
 )
-def list_novelist(
+async def list_novelist(
     session: SessionDep, current_user: CurrentUser, novelist_id: int
 ):
-    db_novelist = get_novelist_or_return_404(session, novelist_id)
+    db_novelist = await get_novelist_or_return_404(session, novelist_id)
 
     return db_novelist
 
 
 @router.get('/', response_model=NovelistList, status_code=HTTPStatus.OK)
-def list_novelists(
+async def list_novelists(
     session: SessionDep,
     current_user: CurrentUser,
     novelist_filter: Annotated[NovelistFilter, Query()],
@@ -116,7 +116,7 @@ def list_novelists(
 
     offset = (novelist_filter.page - 1) * novelist_filter.limit
 
-    db_novelists = session.scalars(
+    db_novelists = await session.scalars(
         query.offset(offset).limit(novelist_filter.limit)
     )
 

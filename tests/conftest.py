@@ -1,9 +1,9 @@
 import factory
 import pytest
+import pytest_asyncio
 from faker import Faker
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from madr_fastapi.app import app
@@ -26,55 +26,59 @@ def client(session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
+@pytest_asyncio.fixture
+async def session():
+    engine = create_async_engine(
+        'sqlite+aiosqlite:///:memory:',
         connect_args={'check_same_thread': False},
         poolclass=StaticPool,
     )
-    enable_sqlite_foreign_keys(engine)
-    table_registry.metadata.create_all(engine)
 
-    with Session(engine) as session:
+    async with engine.begin() as conn:
+        enable_sqlite_foreign_keys(engine)
+        await conn.run_sync(table_registry.metadata.create_all)
+
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
-    table_registry.metadata.drop_all(engine)
-    engine.dispose()
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
+
+    await engine.dispose()
 
 
-@pytest.fixture
-def user(session: Session) -> User:
+@pytest_asyncio.fixture
+async def user(session: AsyncSession) -> User:
     password = 'test123'
 
     user = UserFactory(password=get_password_hash(password))
 
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
 
     user.clean_password = password  # type: ignore
 
     return user  # type: ignore
 
 
-@pytest.fixture
-def other_user(session: Session) -> User:
+@pytest_asyncio.fixture
+async def other_user(session: AsyncSession) -> User:
     password = 'test123'
 
     user = UserFactory(password=get_password_hash(password))
 
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
 
     user.clean_password = password  # type: ignore
 
     return user  # type: ignore
 
 
-@pytest.fixture
-def token(client, user):
+@pytest_asyncio.fixture
+async def token(client, user):
     response = client.post(
         '/auth/token',
         data={'username': user.email, 'password': user.clean_password},
@@ -83,46 +87,46 @@ def token(client, user):
     return response.json()['access_token']
 
 
-@pytest.fixture
-def novelist(session: Session) -> Novelist:
+@pytest_asyncio.fixture
+async def novelist(session: AsyncSession) -> Novelist:
     novelist = NovelistFactory()
 
     session.add(novelist)
-    session.commit()
-    session.refresh(novelist)
+    await session.commit()
+    await session.refresh(novelist)
 
     return novelist  # type: ignore
 
 
-@pytest.fixture
-def other_novelist(session: Session) -> Novelist:
+@pytest_asyncio.fixture
+async def other_novelist(session: AsyncSession) -> Novelist:
     novelist = NovelistFactory()
 
     session.add(novelist)
-    session.commit()
-    session.refresh(novelist)
+    await session.commit()
+    await session.refresh(novelist)
 
     return novelist  # type: ignore
 
 
-@pytest.fixture
-def book(session: Session, novelist: Novelist) -> Book:
+@pytest_asyncio.fixture
+async def book(session: AsyncSession, novelist: Novelist) -> Book:
     book = BookFactory(novelist_id=novelist.id)
 
     session.add(book)
-    session.commit()
-    session.refresh(book)
+    await session.commit()
+    await session.refresh(book)
 
     return book  # type: ignore
 
 
-@pytest.fixture
-def other_book(session: Session, novelist: Novelist) -> Book:
+@pytest_asyncio.fixture
+async def other_book(session: AsyncSession, novelist: Novelist) -> Book:
     book = BookFactory(novelist_id=novelist.id)
 
     session.add(book)
-    session.commit()
-    session.refresh(book)
+    await session.commit()
+    await session.refresh(book)
 
     return book  # type: ignore
 

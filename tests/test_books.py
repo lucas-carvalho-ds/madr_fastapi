@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+import pytest
+
 from madr_fastapi.schemas import BookPublic
 from tests.conftest import BookFactory
 
@@ -62,10 +64,13 @@ def test_list_books_should_return_all_fields(client, token, book):
     ]
 
 
-def test_list_books_should_return_5_books(session, client, token, novelist):
+@pytest.mark.asyncio
+async def test_list_books_should_return_5_books(
+    session, client, token, novelist
+):
     expected_books = 5
     session.add_all(BookFactory.create_batch(5, novelist_id=novelist.id))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/books/',
@@ -75,12 +80,13 @@ def test_list_books_should_return_5_books(session, client, token, novelist):
     assert len(response.json()['books']) == expected_books
 
 
-def test_list_books_pagination_should_return_2_books(
+@pytest.mark.asyncio
+async def test_list_books_pagination_should_return_2_books(
     session, client, token, novelist
 ):
     expected_books = 2
     session.add_all(BookFactory.create_batch(5, novelist_id=novelist.id))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/books/?page=1&limit=2',
@@ -90,7 +96,8 @@ def test_list_books_pagination_should_return_2_books(
     assert len(response.json()['books']) == expected_books
 
 
-def test_list_books_filter_name_should_return_1_book(
+@pytest.mark.asyncio
+async def test_list_books_filter_name_should_return_1_book(
     session, client, token, novelist
 ):
     expected_books = 1
@@ -98,7 +105,7 @@ def test_list_books_filter_name_should_return_1_book(
     session.add(BookFactory.create(title='aaa', novelist_id=novelist.id))
     session.add(BookFactory.create(title='bab', novelist_id=novelist.id))
     session.add(BookFactory.create(title='ccc', novelist_id=novelist.id))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/books/?title=c',
@@ -108,7 +115,8 @@ def test_list_books_filter_name_should_return_1_book(
     assert len(response.json()['books']) == expected_books
 
 
-def test_list_books_filter_year_should_return_3_books(
+@pytest.mark.asyncio
+async def test_list_books_filter_year_should_return_3_books(
     session, client, token, novelist
 ):
     expected_books = 3
@@ -122,7 +130,7 @@ def test_list_books_filter_year_should_return_3_books(
     session.add_all(
         BookFactory.create_batch(5, year=2023, novelist_id=novelist.id)
     )
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/books/?year=2026', headers={'Authorization': f'Bearer {token}'}

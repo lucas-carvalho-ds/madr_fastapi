@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+import pytest
+
 from madr_fastapi.schemas import NovelistPublic
 from tests.conftest import NovelistFactory
 
@@ -50,10 +52,13 @@ def test_list_novelists_should_return_all_fields(client, token, novelist):
     ]
 
 
-def test_list_novelists_should_return_5_novelists(session, client, token):
+@pytest.mark.asyncio
+async def test_list_novelists_should_return_5_novelists(
+    session, client, token
+):
     expected_novelists = 5
     session.add_all(NovelistFactory.create_batch(5))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/novelists/',
@@ -63,12 +68,13 @@ def test_list_novelists_should_return_5_novelists(session, client, token):
     assert len(response.json()['novelists']) == expected_novelists
 
 
-def test_list_novelists_pagination_should_return_2_novelists(
+@pytest.mark.asyncio
+async def test_list_novelists_pagination_should_return_2_novelists(
     session, client, token
 ):
     expected_novelists = 2
     session.add_all(NovelistFactory.create_batch(5))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/novelists/?page=1&limit=2',
@@ -78,7 +84,8 @@ def test_list_novelists_pagination_should_return_2_novelists(
     assert len(response.json()['novelists']) == expected_novelists
 
 
-def test_list_novelists_filter_name_should_return_5_novelists(
+@pytest.mark.asyncio
+async def test_list_novelists_filter_name_should_return_5_novelists(
     session, client, token
 ):
     expected_novelists = 1
@@ -86,7 +93,7 @@ def test_list_novelists_filter_name_should_return_5_novelists(
     session.add(NovelistFactory.create(name='aaa'))
     session.add(NovelistFactory.create(name='bab'))
     session.add(NovelistFactory.create(name='ccc'))
-    session.commit()
+    await session.commit()
 
     response = client.get(
         '/novelists/?name=c',

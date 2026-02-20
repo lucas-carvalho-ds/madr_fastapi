@@ -2,17 +2,17 @@ from http import HTTPStatus
 
 from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from madr_fastapi.models import Book, Novelist, User
 from madr_fastapi.security import verify_password
 from madr_fastapi.utils import sanitize_name
 
 
-def verify_duplicate_user(session: Session, user) -> None:
+async def verify_duplicate_user(session: AsyncSession, user) -> None:
     cleaned_username = sanitize_name(user.username)
 
-    db_user = session.scalar(
+    db_user = await session.scalar(
         select(User).where(
             (User.username == cleaned_username) | (User.email == user.email)
         )
@@ -39,9 +39,10 @@ def ensure_user_owner(current_user: User, user_id: int) -> None:
         )
 
 
-def authenticate_user(session: Session, email: str, password: str) -> User:
-
-    user = session.scalar(select(User).where(User.email == email))
+async def authenticate_user(
+    session: AsyncSession, email: str, password: str
+) -> User:
+    user = await session.scalar(select(User).where(User.email == email))
 
     if not user or not verify_password(password, user.password):
         raise HTTPException(
@@ -52,10 +53,10 @@ def authenticate_user(session: Session, email: str, password: str) -> User:
     return user
 
 
-def verify_duplicate_novelist(session: Session, novelist) -> None:
+async def verify_duplicate_novelist(session: AsyncSession, novelist) -> None:
     cleaned_name = sanitize_name(novelist.name)
 
-    db_novelist = session.scalar(
+    db_novelist = await session.scalar(
         select(Novelist).where((Novelist.name == cleaned_name))
     )
 
@@ -67,8 +68,10 @@ def verify_duplicate_novelist(session: Session, novelist) -> None:
             )
 
 
-def get_novelist_or_return_404(session: Session, novelist_id: int) -> Novelist:
-    db_novelist = session.scalar(
+async def get_novelist_or_return_404(
+    session: AsyncSession, novelist_id: int
+) -> Novelist:
+    db_novelist = await session.scalar(
         select(Novelist).where(Novelist.id == novelist_id)
     )
 
@@ -80,10 +83,12 @@ def get_novelist_or_return_404(session: Session, novelist_id: int) -> Novelist:
     return db_novelist
 
 
-def verify_duplicate_book(session: Session, book) -> None:
+async def verify_duplicate_book(session: AsyncSession, book) -> None:
     cleaned_title = sanitize_name(book.title)
 
-    db_book = session.scalar(select(Book).where((Book.title == cleaned_title)))
+    db_book = await session.scalar(
+        select(Book).where((Book.title == cleaned_title))
+    )
 
     if db_book:
         if db_book.title == cleaned_title:
@@ -93,8 +98,8 @@ def verify_duplicate_book(session: Session, book) -> None:
             )
 
 
-def get_book_or_return_404(session: Session, book_id: int) -> Book:
-    db_book = session.scalar(select(Book).where(Book.id == book_id))
+async def get_book_or_return_404(session: AsyncSession, book_id: int) -> Book:
+    db_book = await session.scalar(select(Book).where(Book.id == book_id))
 
     if not db_book:
         raise HTTPException(

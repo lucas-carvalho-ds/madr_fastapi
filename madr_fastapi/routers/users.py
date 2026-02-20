@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from madr_fastapi.database import get_session
 from madr_fastapi.models import User
@@ -23,15 +23,15 @@ from madr_fastapi.utils import sanitize_name
 
 router = APIRouter(prefix='/users', tags=['users'])
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
     '/user', response_model=UserPublic, status_code=HTTPStatus.CREATED
 )
-def create_user(session: SessionDep, user: UserSchema):
-    verify_duplicate_user(session, user)
+async def create_user(session: SessionDep, user: UserSchema):
+    await verify_duplicate_user(session, user)
 
     cleaned_username = sanitize_name(user.username)
 
@@ -42,15 +42,15 @@ def create_user(session: SessionDep, user: UserSchema):
     )
 
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
 
     return db_user
 
 
 @router.get('/', response_model=UserList, status_code=HTTPStatus.OK)
-def list_users(session: SessionDep):
-    users = session.scalars(select(User))
+async def list_users(session: SessionDep):
+    users = await session.scalars(select(User))
 
     return {'users': users}
 
@@ -60,7 +60,7 @@ def list_users(session: SessionDep):
     response_model=UserPublic,
     status_code=HTTPStatus.OK,
 )
-def update_user(
+async def update_user(
     session: SessionDep,
     current_user: CurrentUser,
     user_id: int,
@@ -76,8 +76,8 @@ def update_user(
         current_user.password = get_password_hash(user.password)
 
         session.add(current_user)
-        session.commit()
-        session.refresh(current_user)
+        await session.commit()
+        await session.refresh(current_user)
 
         return current_user
 
@@ -91,11 +91,13 @@ def update_user(
 @router.delete(
     '/user/{user_id}', response_model=Message, status_code=HTTPStatus.OK
 )
-def delete_user(session: SessionDep, current_user: CurrentUser, user_id: int):
+async def delete_user(
+    session: SessionDep, current_user: CurrentUser, user_id: int
+):
     ensure_user_owner(current_user, user_id)
 
-    session.delete(current_user)
-    session.commit()
+    await session.delete(current_user)
+    await session.commit()
 
     return {'message': 'User deleted successfully.'}
 
@@ -105,9 +107,11 @@ def delete_user(session: SessionDep, current_user: CurrentUser, user_id: int):
     response_model=UserPublic,
     status_code=HTTPStatus.OK,
 )
-def list_user(session: SessionDep, current_user: CurrentUser, user_id: int):
+async def list_user(
+    session: SessionDep, current_user: CurrentUser, user_id: int
+):
     ensure_user_owner(current_user, user_id)
 
-    db_user = session.scalar(select(User).where(User.id == user_id))
+    db_user = await session.scalar(select(User).where(User.id == user_id))
 
     return db_user
