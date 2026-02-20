@@ -48,13 +48,6 @@ async def create_user(session: SessionDep, user: UserSchema):
     return db_user
 
 
-@router.get('/', response_model=UserList, status_code=HTTPStatus.OK)
-async def list_users(session: SessionDep):
-    users = await session.scalars(select(User))
-
-    return {'users': users}
-
-
 @router.put(
     '/user/{user_id}',
     response_model=UserPublic,
@@ -115,3 +108,10 @@ async def list_user(
     db_user = await session.scalar(select(User).where(User.id == user_id))
 
     return db_user
+
+
+@router.get('/', response_model=UserList, status_code=HTTPStatus.OK)
+async def list_users(session: SessionDep):
+    users = await session.scalars(select(User))
+
+    return {'users': users}

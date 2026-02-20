@@ -1,0 +1,31 @@
+services:
+  madrfastapi_database:
+    image: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U madr_user -d madr_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    
+  madrfastapi_app:
+    image: madrfastapi_app
+    entrypoint: ./entrypoint.sh
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      madrfastapi_database:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://madr_user:madr_password@madrfastapi_database:5432/madr_db
+
+volumes:
+  pgdata:
