@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from madr_fastapi.app import app
-from madr_fastapi.database import get_session
-from madr_fastapi.models import Novelist, User, table_registry
+from madr_fastapi.database import enable_sqlite_foreign_keys, get_session
+from madr_fastapi.models import Book, Novelist, User, table_registry
 from madr_fastapi.security import get_password_hash
 from madr_fastapi.settings import Settings
 from madr_fastapi.utils import sanitize_name
@@ -33,6 +33,7 @@ def session():
         connect_args={'check_same_thread': False},
         poolclass=StaticPool,
     )
+    enable_sqlite_foreign_keys(engine)
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -105,6 +106,28 @@ def other_novelist(session: Session) -> Novelist:
 
 
 @pytest.fixture
+def book(session: Session, novelist: Novelist) -> Book:
+    book = BookFactory(novelist_id=novelist.id)
+
+    session.add(book)
+    session.commit()
+    session.refresh(book)
+
+    return book  # type: ignore
+
+
+@pytest.fixture
+def other_book(session: Session, novelist: Novelist) -> Book:
+    book = BookFactory(novelist_id=novelist.id)
+
+    session.add(book)
+    session.commit()
+    session.refresh(book)
+
+    return book  # type: ignore
+
+
+@pytest.fixture
 def settings():
     return Settings()  # type: ignore
 
@@ -123,3 +146,12 @@ class NovelistFactory(factory.Factory):
         model = Novelist
 
     name = factory.LazyFunction(lambda: sanitize_name(Faker().name()))
+
+
+class BookFactory(factory.Factory):
+    class Meta:
+        model = Book
+
+    year = factory.LazyFunction(lambda: Faker().random_int(min=1900, max=2026))
+    title = factory.LazyFunction(lambda: sanitize_name(Faker().word().title()))
+    novelist_id = 1

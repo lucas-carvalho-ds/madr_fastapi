@@ -96,6 +96,15 @@ def test_list_novelists_filter_name_should_return_5_novelists(
     assert len(response.json()['novelists']) == expected_novelists
 
 
+def test_list_empty_novelists(client, token):
+    response = client.get(
+        '/novelists/', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()['novelists'] == []
+
+
 def test_list_novelist(client, novelist, token):
     response = client.get(
         f'/novelists/novelist/{novelist.id}',

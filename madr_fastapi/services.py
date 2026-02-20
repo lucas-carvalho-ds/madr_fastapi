@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from madr_fastapi.models import Novelist, User
+from madr_fastapi.models import Book, Novelist, User
 from madr_fastapi.security import verify_password
 from madr_fastapi.utils import sanitize_name
 
@@ -78,3 +78,27 @@ def get_novelist_or_return_404(session: Session, novelist_id: int) -> Novelist:
         )
 
     return db_novelist
+
+
+def verify_duplicate_book(session: Session, book) -> None:
+    cleaned_title = sanitize_name(book.title)
+
+    db_book = session.scalar(select(Book).where((Book.title == cleaned_title)))
+
+    if db_book:
+        if db_book.title == cleaned_title:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Title already exists.',
+            )
+
+
+def get_book_or_return_404(session: Session, book_id: int) -> Book:
+    db_book = session.scalar(select(Book).where(Book.id == book_id))
+
+    if not db_book:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Book not found.'
+        )
+
+    return db_book

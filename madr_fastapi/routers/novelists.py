@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from madr_fastapi.database import get_session
 from madr_fastapi.models import Novelist, User
 from madr_fastapi.schemas import (
-    FilterNovelist,
     Message,
+    NovelistFilter,
     NovelistList,
     NovelistPublic,
     NovelistSchema,
@@ -107,7 +107,7 @@ def list_novelist(
 def list_novelists(
     session: SessionDep,
     current_user: CurrentUser,
-    novelist_filter: Annotated[FilterNovelist, Query()],
+    novelist_filter: Annotated[NovelistFilter, Query()],
 ):
     query = select(Novelist)
 
@@ -116,8 +116,8 @@ def list_novelists(
 
     offset = (novelist_filter.page - 1) * novelist_filter.limit
 
-    novelists_db = session.scalars(
+    db_novelists = session.scalars(
         query.offset(offset).limit(novelist_filter.limit)
     )
 
-    return {'novelists': novelists_db.all()}
+    return {'novelists': db_novelists.all()}

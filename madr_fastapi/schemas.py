@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -32,9 +34,8 @@ class NovelistSchema(BaseModel):
     name: str
 
 
-class NovelistPublic(BaseModel):
+class NovelistPublic(NovelistSchema):
     id: int
-    name: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,10 +48,37 @@ class NovelistList(BaseModel):
     novelists: list[NovelistPublic]
 
 
-class FilterPage(BaseModel):
+class PageFilter(BaseModel):
     limit: int = Field(ge=0, default=20)
-
-
-class FilterNovelist(FilterPage):
     page: int = 1
+
+
+class NovelistFilter(PageFilter):
     name: str | None = Field(default=None, min_length=1, max_length=80)
+
+
+class BookSchema(BaseModel):
+    year: int
+    title: str
+    novelist_id: int
+
+
+class BookPublic(BookSchema):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BookList(BaseModel):
+    books: list[BookPublic]
+
+
+class BookUpdate(BaseModel):
+    year: int | None = None
+    title: str | None = None
+    novelist_id: int | None = None
+
+
+class BookFilter(PageFilter):
+    year: int | None = Field(default=None, ge=1900, le=datetime.now().year)
+    title: str | None = Field(default=None, min_length=1, max_length=80)
