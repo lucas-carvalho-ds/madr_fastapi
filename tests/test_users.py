@@ -5,7 +5,7 @@ from madr_fastapi.schemas import UserPublic
 
 def test_create_user(client):
     response = client.post(
-        '/users/user',
+        '/users',
         json={
             'username': 'alice',
             'email': 'alice@example.com',
@@ -34,7 +34,7 @@ def test_read_users(client, user, token):
 
 def test_update_user(client, user, token):
     response = client.put(
-        f'/users/user/{user.id}',
+        f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'alice nery',
@@ -53,7 +53,7 @@ def test_update_user(client, user, token):
 
 def test_read_user(client, user, token):
     response = client.get(
-        f'/users/user/{user.id}',
+        f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -67,7 +67,7 @@ def test_read_user(client, user, token):
 
 def test_delete_user(client, user, token):
     response = client.delete(
-        f'/users/user/{user.id}',
+        f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -77,7 +77,7 @@ def test_delete_user(client, user, token):
 
 def test_username_already_exists_create_user(client, user):
     response = client.post(
-        '/users/user/',
+        '/users',
         json={
             'username': user.username,
             'email': 'alice@example.com',
@@ -91,7 +91,7 @@ def test_username_already_exists_create_user(client, user):
 
 def test_email_already_exists_create_user(client, user):
     response = client.post(
-        '/users/user/',
+        '/users',
         json={
             'username': 'alice',
             'email': user.email,
@@ -105,7 +105,7 @@ def test_email_already_exists_create_user(client, user):
 
 def test_update_integrity_error(client, user, other_user, token):
     response = client.put(
-        f'/users/user/{user.id}',
+        f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': other_user.username,
@@ -120,7 +120,7 @@ def test_update_integrity_error(client, user, other_user, token):
 
 def test_update_user_with_another_user(client, other_user, token):
     response = client.put(
-        f'/users/user/{other_user.id}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
@@ -135,7 +135,7 @@ def test_update_user_with_another_user(client, other_user, token):
 
 def test_delete_user_with_another_user(client, other_user, token):
     response = client.delete(
-        f'/users/user/{other_user.id}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 

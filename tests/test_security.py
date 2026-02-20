@@ -20,7 +20,7 @@ def test_jwt(settings):
 
 def test_jwt_invalid_token(client):
     response = client.delete(
-        '/users/user/1', headers={'Authorization': 'Bearer token-invalido'}
+        '/users/1', headers={'Authorization': 'Bearer token-invalido'}
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -32,7 +32,7 @@ def test_get_current_user_not_found(client):
     token = create_access_token(data)
 
     response = client.delete(
-        '/users/user/1',
+        '/users/1',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -45,7 +45,7 @@ def test_get_current_user_does_not_exists(client):
     token = create_access_token(data)
 
     response = client.delete(
-        '/users/user/1',
+        '/users/1',
         headers={'Authorization': f'Bearer {token}'},
     )
 

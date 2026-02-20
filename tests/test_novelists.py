@@ -8,7 +8,7 @@ from tests.conftest import NovelistFactory
 
 def test_create_novelist(client, token):
     response = client.post(
-        '/novelists/novelist',
+        '/novelists',
         headers={'Authorization': f'Bearer {token}'},
         json={'name': 'Mario Brás'},
     )
@@ -19,7 +19,7 @@ def test_create_novelist(client, token):
 
 def test_update_integrity_error(client, novelist, other_novelist, token):
     response = client.patch(
-        f'/novelists/novelist/{novelist.id}',
+        f'/novelists/{novelist.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={'name': other_novelist.name},
     )
@@ -34,7 +34,7 @@ def test_list_novelists(client, novelist, token):
     )
 
     response = client.get(
-        '/novelists/', headers={'Authorization': f'Bearer {token}'}
+        '/novelists', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -43,7 +43,7 @@ def test_list_novelists(client, novelist, token):
 
 def test_list_novelists_should_return_all_fields(client, token, novelist):
     response = client.get(
-        '/novelists/',
+        '/novelists',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -61,7 +61,7 @@ async def test_list_novelists_should_return_5_novelists(
     await session.commit()
 
     response = client.get(
-        '/novelists/',
+        '/novelists',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -105,7 +105,7 @@ async def test_list_novelists_filter_name_should_return_5_novelists(
 
 def test_list_empty_novelists(client, token):
     response = client.get(
-        '/novelists/', headers={'Authorization': f'Bearer {token}'}
+        '/novelists', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -114,7 +114,7 @@ def test_list_empty_novelists(client, token):
 
 def test_list_novelist(client, novelist, token):
     response = client.get(
-        f'/novelists/novelist/{novelist.id}',
+        f'/novelists/{novelist.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -124,7 +124,7 @@ def test_list_novelist(client, novelist, token):
 
 def test_not_found_list_novelist(client, token):
     response = client.get(
-        '/novelists/novelist/0', headers={'Authorization': f'Bearer {token}'}
+        '/novelists/0', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -133,7 +133,7 @@ def test_not_found_list_novelist(client, token):
 
 def test_delete_novelist(client, novelist, token):
     response = client.delete(
-        f'/novelists/novelist/{novelist.id}',  # type: ignore
+        f'/novelists/{novelist.id}',  # type: ignore
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -143,7 +143,7 @@ def test_delete_novelist(client, novelist, token):
 
 def test_not_found_delete_novelist(client, token):
     response = client.delete(
-        '/novelists/novelist/0', headers={'Authorization': f'Bearer {token}'}
+        '/novelists/0', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -152,7 +152,7 @@ def test_not_found_delete_novelist(client, token):
 
 def test_patch_novelist(client, novelist, token):
     response = client.patch(
-        f'/novelists/novelist/{novelist.id}',
+        f'/novelists/{novelist.id}',
         json={'name': 'João de Lima'},
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -162,7 +162,7 @@ def test_patch_novelist(client, novelist, token):
 
 def test_not_found_patch_novelist(client, token):
     response = client.patch(
-        '/novelists/novelist/0',
+        '/novelists/0',
         json={},
         headers={'Authorization': f'Bearer {token}'},
     )

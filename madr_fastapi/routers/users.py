@@ -28,7 +28,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
-    '/user', response_model=UserPublic, status_code=HTTPStatus.CREATED
+    '/', response_model=UserPublic, status_code=HTTPStatus.CREATED
 )
 async def create_user(session: SessionDep, user: UserSchema):
     await verify_duplicate_user(session, user)
@@ -48,8 +48,22 @@ async def create_user(session: SessionDep, user: UserSchema):
     return db_user
 
 
+@router.delete(
+    '/{user_id}', response_model=Message, status_code=HTTPStatus.OK
+)
+async def delete_user(
+    session: SessionDep, current_user: CurrentUser, user_id: int
+):
+    ensure_user_owner(current_user, user_id)
+
+    await session.delete(current_user)
+    await session.commit()
+
+    return {'message': 'User deleted successfully.'}
+
+
 @router.put(
-    '/user/{user_id}',
+    '/{user_id}',
     response_model=UserPublic,
     status_code=HTTPStatus.OK,
 )
@@ -81,22 +95,8 @@ async def update_user(
         )
 
 
-@router.delete(
-    '/user/{user_id}', response_model=Message, status_code=HTTPStatus.OK
-)
-async def delete_user(
-    session: SessionDep, current_user: CurrentUser, user_id: int
-):
-    ensure_user_owner(current_user, user_id)
-
-    await session.delete(current_user)
-    await session.commit()
-
-    return {'message': 'User deleted successfully.'}
-
-
 @router.get(
-    '/user/{user_id}',
+    '/{user_id}',
     response_model=UserPublic,
     status_code=HTTPStatus.OK,
 )

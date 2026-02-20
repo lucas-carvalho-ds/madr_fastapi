@@ -53,7 +53,7 @@ def test_token_expired_aftertime(client, user):
 
     with freeze_time('2023-07-14 13:01:00'):
         response = client.put(
-            f'/users/user/{user.id}',
+            f'/users/{user.id}',
             headers={'Authorization': f'Bearer {token}'},
             json={
                 'username': 'wrongwrong',

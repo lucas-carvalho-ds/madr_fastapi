@@ -30,7 +30,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
-    '/book', response_model=BookPublic, status_code=HTTPStatus.CREATED
+    '/', response_model=BookPublic, status_code=HTTPStatus.CREATED
 )
 async def create_book(
     session: SessionDep, current_user: CurrentUser, book: BookSchema
@@ -52,7 +52,7 @@ async def create_book(
 
 
 @router.delete(
-    '/book/{book_id}', response_model=Message, status_code=HTTPStatus.OK
+    '/{book_id}', response_model=Message, status_code=HTTPStatus.OK
 )
 async def delete_book(
     session: SessionDep, current_user: CurrentUser, book_id: int
@@ -66,7 +66,7 @@ async def delete_book(
 
 
 @router.patch(
-    '/book/{book_id}', response_model=BookPublic, status_code=HTTPStatus.OK
+    '/{book_id}', response_model=BookPublic, status_code=HTTPStatus.OK
 )
 async def update_book(
     session: SessionDep,
@@ -93,7 +93,7 @@ async def update_book(
 
 
 @router.get(
-    '/book/{book_id}', response_model=BookPublic, status_code=HTTPStatus.OK
+    '/{book_id}', response_model=BookPublic, status_code=HTTPStatus.OK
 )
 async def list_book(
     session: SessionDep, current_user: CurrentUser, book_id: int

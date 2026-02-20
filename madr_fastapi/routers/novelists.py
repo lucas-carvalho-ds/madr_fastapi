@@ -29,7 +29,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
-    '/novelist', response_model=NovelistPublic, status_code=HTTPStatus.CREATED
+    '/', response_model=NovelistPublic, status_code=HTTPStatus.CREATED
 )
 async def create_novelist(
     session: SessionDep, current_user: CurrentUser, novelist: NovelistSchema
@@ -48,7 +48,7 @@ async def create_novelist(
 
 
 @router.delete(
-    '/novelist/{novelist_id}',
+    '/{novelist_id}',
     response_model=Message,
     status_code=HTTPStatus.OK,
 )
@@ -64,7 +64,7 @@ async def delete_novelist(
 
 
 @router.patch(
-    '/novelist/{novelist_id}',
+    '/{novelist_id}',
     response_model=NovelistPublic,
     status_code=HTTPStatus.OK,
 )
@@ -91,7 +91,7 @@ async def update_novelist(
 
 
 @router.get(
-    '/novelist/{novelist_id}',
+    '/{novelist_id}',
     response_model=NovelistPublic,
     status_code=HTTPStatus.OK,
 )

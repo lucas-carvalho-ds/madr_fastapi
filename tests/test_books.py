@@ -8,7 +8,7 @@ from tests.conftest import BookFactory
 
 def test_create_book(client, token, novelist):
     response = client.post(
-        '/books/book',
+        '/books',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'year': 2026,
@@ -28,7 +28,7 @@ def test_create_book(client, token, novelist):
 
 def test_update_integrity_error(client, book, other_book, token):
     response = client.patch(
-        f'/books/book/{book.id}',
+        f'/books/{book.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={'title': other_book.title},
     )
@@ -41,7 +41,7 @@ def test_list_books(client, book, token):
     books_schema = BookPublic.model_validate(book).model_dump(mode='json')
 
     response = client.get(
-        '/books/', headers={'Authorization': f'Bearer {token}'}
+        '/books', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -50,7 +50,7 @@ def test_list_books(client, book, token):
 
 def test_list_books_should_return_all_fields(client, token, book):
     response = client.get(
-        '/books/',
+        '/books',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -73,7 +73,7 @@ async def test_list_books_should_return_5_books(
     await session.commit()
 
     response = client.get(
-        '/books/',
+        '/books',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -141,7 +141,7 @@ async def test_list_books_filter_year_should_return_3_books(
 
 def test_list_empty_books(client, token):
     response = client.get(
-        '/books/', headers={'Authorization': f'Bearer {token}'}
+        '/books', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -150,7 +150,7 @@ def test_list_empty_books(client, token):
 
 def test_list_book(client, book, token):
     response = client.get(
-        f'/books/book/{book.id}',
+        f'/books/{book.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -165,7 +165,7 @@ def test_list_book(client, book, token):
 
 def test_not_found_list_book(client, token):
     response = client.get(
-        '/books/book/0', headers={'Authorization': f'Bearer {token}'}
+        '/books/0', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -174,7 +174,7 @@ def test_not_found_list_book(client, token):
 
 def test_delete_book(client, book, token):
     response = client.delete(
-        f'/books/book/{book.id}',  # type: ignore
+        f'/books/{book.id}',  # type: ignore
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -184,7 +184,7 @@ def test_delete_book(client, book, token):
 
 def test_not_found_delete_book(client, token):
     response = client.delete(
-        '/books/book/0', headers={'Authorization': f'Bearer {token}'}
+        '/books/0', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -193,7 +193,7 @@ def test_not_found_delete_book(client, token):
 
 def test_patch_book(client, book, token):
     response = client.patch(
-        f'/books/book/{book.id}',
+        f'/books/{book.id}',
         json={'title': 'Cavaleiro da Luz'},
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -203,7 +203,7 @@ def test_patch_book(client, book, token):
 
 def test_not_found_patch_book(client, token):
     response = client.patch(
-        '/books/book/0',
+        '/books/0',
         json={},
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -214,7 +214,7 @@ def test_not_found_patch_book(client, token):
 
 def test_novelist_not_found_patch_book(client, book, token):
     response = client.patch(
-        f'/books/book/{book.id}',
+        f'/books/{book.id}',
         json={'novelist_id': 0},
         headers={'Authorization': f'Bearer {token}'},
     )
